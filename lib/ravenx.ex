@@ -38,6 +38,35 @@ defmodule Ravenx do
   end
 
   @doc """
+  Dispatch a notification `payload` to a specified `strategy`.
+
+  Custom options for this call can be passed in `options` parameter.
+
+  Returns a tuple with `:ok` or `:error` indicating the final state.
+
+  ## Examples
+
+      iex> Ravenx.dispatch(:slack, %{title: "Hello world!", body: "Science is cool"})
+      {:ok, "ok"}
+
+      iex> Ravenx.dispatch(:wadus, %{title: "Hello world!", body: "Science is cool"})
+      {:error, {:unknown_strategy, :wadus}}
+
+  """
+  @spec dispatch_sync(notif_strategy, notif_payload, notif_options) :: notif_result
+  def dispatch_sync(strategy, payload, options \\ %{}) do
+    handler = Keyword.get(available_strategies(), strategy)
+
+    opts = get_options(strategy, payload, options)
+
+    if is_nil(handler) do
+      {:error, {:unknown_strategy, strategy}}
+    else
+      handler.call(payload, opts)
+    end
+  end
+
+  @doc """
   Dispatch a notification `payload` to a specified `strategy` asynchronously.
 
   This function should be used when the caller has an interest in the notification dispatch result,

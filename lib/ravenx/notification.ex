@@ -31,6 +31,25 @@ defmodule Ravenx.Notification do
       end
 
       @doc """
+      Function dispatch the notification purely synchronously without a task.
+
+      The object received will be used as the `get_notifications_config` argument,
+      which should return a keyword list of notification configs that have the
+      notification IDs as keys and the configuration tuple as value.
+
+      It will respond with a keyword list that have the notification IDs as keys,
+      and a tuple indicating final state as value.
+      That tuple follows standard notification dispatch response.
+
+      """
+      @spec dispatch_sync(any) :: [{Ravenx.notif_id, Ravenx.notif_result}]
+      def dispatch_sync(opts) do
+        opts
+        |> get_notifications_config
+        |> Enum.map(fn({k, opts}) -> {k, Ravenx.Notification.dispatch_notification(opts, :pure_sync)} end)
+      end
+
+      @doc """
       Function dispatch the notification asynchronously and linked.
 
       Notifications dispatched with this function are linked to their caller processes. If you are
@@ -104,6 +123,7 @@ defmodule Ravenx.Notification do
   end
 
   defp get_dispatcher(:sync), do: &Ravenx.dispatch/3
+  defp get_dispatcher(:pure_sync), do: &Ravenx.dispatch_sync/3
   defp get_dispatcher(:async), do: &Ravenx.dispatch_async/3
   defp get_dispatcher(:nolink), do: &Ravenx.dispatch_nolink/3
 end
